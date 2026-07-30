@@ -1,31 +1,33 @@
 {
   "name": "ujumbesms",
-  "version": "0.3.4",
-  "description": "a simple module for access UjumbeSMS cloud messaging api",
-  "main": "index.js",
+  "private": true,
+  "files": [
+    "dist"
+  ],
   "dependencies": {
-    "axios": "0.16.2",
-    "validator": "8.1.0"
+    "libphonenumber-js": "^1.13.9"
   },
   "devDependencies": {
-    "@types/chai": "4.0.4",
-    "@types/mocha": "2.2.42",
-    "@types/node": "8.0.25",
-    "@types/validator": "6.2.2",
-    "chai": "4.1.1",
-    "chai-as-promised": "7.1.1",
-    "dotenv": "4.0.0",
-    "mocha": "3.5.0",
-    "rimraf": "2.6.1",
-    "typescript": "^2.4.2"
+    "@types/bun": "latest",
+    "typescript": "^5"
+  },
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
   },
   "scripts": {
-    "test": "npm start && mocha -t 10000 ./test/**/*.js",
-    "build": "./node_modules/.bin/tsc -p tsconfig.json --diagnostics --inlineSourceMap",
-    "clean": "rimraf *.js *.d.ts test/*.js test/*.d.ts",
-    "start": "npm run clean && npm run build",
-    "prepublishOnly": "npm start",
-    "watch:build": "tsc -p tsconfig.json --diagnostics --inlineSourceMap --watch"
+    "build": "bun run build:esm && bun run build:cjs && bun run build:types",
+    "build:esm": "bun build ./src/index.ts --outdir ./dist --target node --format esm --entry-naming index.js",
+    "build:cjs": "bun build ./src/index.ts --outdir ./dist --target node --format cjs --entry-naming index.cjs",
+    "build:types": "tsc --emitDeclarationOnly --declaration --outDir dist",
+    "prepublishOnly": "bun run build"
   },
   "keywords": [
     "sms",
@@ -44,6 +46,5 @@
     "type": "git",
     "url": "ssh+git@github.com:trendy-weshy/node-ujumbe.git"
   },
-  "publisher": "@trendy-weshy",
-  "types": "index.d.ts"
+  "publisher": "@trendy-weshy"
 }

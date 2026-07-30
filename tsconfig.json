@@ -1,38 +1,32 @@
 {
-    "compilerOptions": {
-		"target": "es5",
-		"module": "commonjs",
-		"noImplicitAny": true,
-		"noEmitOnError": true,
-		"suppressImplicitAnyIndexErrors": true,
-		"removeComments": true,
-        "preserveConstEnums": true,
-        "alwaysStrict": true,
-        "pretty": true,
-        "declaration": true,
-        "moduleResolution": "node",
-        "allowSyntheticDefaultImports": false,
-        "lib": [
-            "es2015",
-            "es2015.promise",
-            "es5"
-        ],
-        "types": [
-            "node",
-            "mocha"
-        ]
-    },
-    "exclude": [
-        "node_modules",
-        "samples",
-        "**/*.js"
-    ],
-    "files": [
-        "api.ts",
-        "sms.ts",
-        "index.ts"
-    ],
-    "include": [
-        "test"
-    ]
+  "compilerOptions": {
+    // Environment setup & latest features
+    "lib": ["ESNext"],
+    "target": "ESNext",
+    "module": "Preserve",
+    "moduleDetection": "force",
+    "jsx": "react-jsx",
+    "allowJs": true,
+    "types": ["bun"],
+
+    // Bundler mode
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "verbatimModuleSyntax": true,
+    "declaration": true, // needed so tsc can emit .d.ts files
+    "emitDeclarationOnly": true,
+
+    // Best practices
+    "strict": true,
+    "skipLibCheck": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+
+    // Some stricter flags (disabled by default)
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "noPropertyAccessFromIndexSignature": false
+  },
+  "include": ["src"]
 }

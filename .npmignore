@@ -1,7 +1,7 @@
 *.ts
-samples
 test
 .env
 tslint.json
 tsconfig.json
 *.lock # may need to be specified later for package managers lockfiles
+src
