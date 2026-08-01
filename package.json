@@ -1,55 +1,64 @@
 {
-  "name": "ujumbesms",
-  "private": true,
-  "files": [
-    "dist"
-  ],
-  "dependencies": {
-    "libphonenumber-js": "^1.13.9"
-  },
-  "devDependencies": {
-    "@types/bun": "latest",
-    "prettier": "^3.9.6",
-    "typescript": "^5"
-  },
-  "type": "module",
-  "main": "./dist/index.cjs",
-  "module": "./dist/index.js",
-  "types": "./dist/index.d.ts",
-  "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "require": "./dist/index.cjs"
-    }
-  },
-  "scripts": {
-    "lint": "tsc --noEmit --pretty false",
-    "format": "prettier --write .",
-    "format:check": "prettier --check .",
-    "test": "bun test",
-    "build": "bun run build:esm && bun run build:cjs && bun run build:types",
-    "build:esm": "bun build ./src/index.ts --outdir ./dist --target node --format esm --entry-naming index.js",
-    "build:cjs": "bun build ./src/index.ts --outdir ./dist --target node --format cjs --entry-naming index.cjs",
-    "build:types": "tsc --emitDeclarationOnly --declaration --outDir dist",
-    "prepublishOnly": "bun run build"
-  },
-  "keywords": [
-    "sms",
-    "ujumbe",
-    "cloud messaging platform",
-    "api",
-    "gateway"
-  ],
-  "author": "John Waweru <wambugu.john.waweru@outlook.com>",
-  "contributors": [
-    "UjumbeSMS <info@depthcomputing.co.ke>",
-    "Patrick Maina <pndungu88@gmail.com>"
-  ],
-  "license": "MIT",
-  "repository": {
-    "type": "git",
-    "url": "ssh+git@github.com:trendy-weshy/node-ujumbe.git"
-  },
-  "publisher": "@trendy-weshy"
+    "name": "ujumbesms",
+    "private": false,
+    "files": [
+        "dist"
+    ],
+    "dependencies": {
+        "libphonenumber-js": "^1.13.9"
+    },
+    "peerDependencies": {
+        "libphonenumber-js": "^1.13.9"
+    },
+    "devDependencies": {
+        "typescript-eslint": "^8.65.0",
+        "@eslint/js": "^10.0.1",
+        "eslint-plugin-import": "^2.32.0",
+        "eslint-plugin-simple-import-sort": "^14.0.0",
+        "globals": "^17.8.0",
+        "@types/bun": "latest",
+        "prettier": "^3.9.6",
+        "typescript": "^5"
+    },
+    "type": "module",
+    "main": "./dist/index.cjs",
+    "module": "./dist/index.js",
+    "types": "./dist/index.d.ts",
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "import": "./dist/index.js",
+            "require": "./dist/index.cjs"
+        }
+    },
+    "scripts": {
+        "lint": "eslint '{src,test}/**/*.ts'",
+        "format": "prettier --write .",
+        "format:check": "prettier --check .",
+        "test": "bun test",
+        "build": "bun run build:esm && bun run build:cjs && bun run build:types",
+        "build:esm": "bun build ./src/index.ts --outdir ./dist --target node --format esm --entry-naming index.js",
+        "build:cjs": "bun build ./src/index.ts --outdir ./dist --target node --format cjs --entry-naming index.cjs",
+        "build:types": "tsc --emitDeclarationOnly --declaration --outDir dist",
+        "prepublishOnly": "bun run build",
+        "ci:check": "bun run --parallel format:check lint test build"
+    },
+    "keywords": [
+        "sms",
+        "ujumbe",
+        "cloud messaging platform",
+        "api",
+        "gateway"
+    ],
+    "author": "John Waweru <wambugu.john.waweru@outlook.com>",
+    "contributors": [
+        "UjumbeSMS <info@depthcomputing.co.ke>",
+        "Patrick Maina <pndungu88@gmail.com>"
+    ],
+    "license": "MIT",
+    "repository": {
+        "type": "git",
+        "url": "ssh+git@github.com:trendy-weshy/node-ujumbe.git"
+    },
+    "publisher": "@trendy-weshy"
 }
