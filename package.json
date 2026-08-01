@@ -9,6 +9,7 @@
   },
   "devDependencies": {
     "@types/bun": "latest",
+    "prettier": "^3.9.6",
     "typescript": "^5"
   },
   "type": "module",
@@ -23,6 +24,10 @@
     }
   },
   "scripts": {
+    "lint": "tsc --noEmit --pretty false",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "bun test",
     "build": "bun run build:esm && bun run build:cjs && bun run build:types",
     "build:esm": "bun build ./src/index.ts --outdir ./dist --target node --format esm --entry-naming index.js",
     "build:cjs": "bun build ./src/index.ts --outdir ./dist --target node --format cjs --entry-naming index.cjs",

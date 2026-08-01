@@ -1,6 +1,12 @@
 import { expect, test } from "bun:test";
 
-import { isEmpty, isNil, objectHasItems, useAsync, useAsyncWithRetry } from "../src/utils";
+import {
+  isEmpty,
+  isNil,
+  objectHasItems,
+  useAsync,
+  useAsyncWithRetry,
+} from "../src/utils";
 
 test("isNil returns true only for null and undefined", () => {
   expect(isNil(null)).toBe(true);
@@ -72,7 +78,10 @@ test("useAsyncWithRetry retries until a promise succeeds", async () => {
 
 test("useAsyncWithRetry returns the last error after exhausting retries", async () => {
   const failure = new Error("persistent failure");
-  const [data, error] = await useAsyncWithRetry(() => Promise.reject(failure), 2);
+  const [data, error] = await useAsyncWithRetry(
+    () => Promise.reject(failure),
+    2,
+  );
 
   expect(data).toBeUndefined();
   expect(error).toBe(failure);

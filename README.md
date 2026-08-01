@@ -1,5 +1,7 @@
 # node-ujumbe-v2
 
+[![CI](https://github.com/waw3ru/node-ujumbe/actions/workflows/main.yml/badge.svg)](https://github.com/waw3ru/node-ujumbe/actions/workflows/main.yml)
+
 To install dependencies:
 
 ```bash

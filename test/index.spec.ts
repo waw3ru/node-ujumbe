@@ -11,9 +11,15 @@ type FetchMock = typeof fetch & {
 
 type MockResponseBody = Partial<ISMSResponse> | Record<string, unknown>;
 
-const mockFetch = (implementation: (...args: Parameters<typeof fetch>) => Promise<Response>): FetchMock => mock(implementation) as unknown as FetchMock;
+const mockFetch = (
+  implementation: (...args: Parameters<typeof fetch>) => Promise<Response>,
+): FetchMock => mock(implementation) as unknown as FetchMock;
 
-const createResponse = (options: { ok?: boolean; status?: number; body?: MockResponseBody }) => {
+const createResponse = (options: {
+  ok?: boolean;
+  status?: number;
+  body?: MockResponseBody;
+}) => {
   const payload = options.body === undefined ? {} : options.body;
   return new Response(JSON.stringify(payload), {
     status: options.status ?? 200,
@@ -22,7 +28,9 @@ const createResponse = (options: { ok?: boolean; status?: number; body?: MockRes
 };
 
 beforeEach(() => {
-  globalThis.fetch = mockFetch(async () => createResponse({ ok: true, status: 200, body: { success: true } })) as unknown as typeof fetch;
+  globalThis.fetch = mockFetch(async () =>
+    createResponse({ ok: true, status: 200, body: { success: true } }),
+  ) as unknown as typeof fetch;
 });
 
 afterEach(() => {
@@ -48,10 +56,14 @@ test("returns the parsed payload when the API request succeeds", async () => {
       },
     },
   };
-  const request = [{ numbers: ["254700000000"], message: "Hello", sender: "TEST" }];
+  const request = [
+    { numbers: ["254700000000"], message: "Hello", sender: "TEST" },
+  ];
   const options = { email: "user@example.com", apiKey: "secret-key" };
 
-  const fetchMock = mockFetch(async () => createResponse({ ok: true, status: 200, body: payload }));
+  const fetchMock = mockFetch(async () =>
+    createResponse({ ok: true, status: 200, body: payload }),
+  );
   globalThis.fetch = fetchMock as unknown as typeof fetch;
 
   const [data, error] = await sendSMS(request, options);
@@ -62,7 +74,9 @@ test("returns the parsed payload when the API request succeeds", async () => {
 });
 
 test("returns the original error when the request itself fails", async () => {
-  const request = [{ numbers: ["254700000000"], message: "Hello", sender: "TEST" }];
+  const request = [
+    { numbers: ["254700000000"], message: "Hello", sender: "TEST" },
+  ];
   const options = { email: "user@example.com", apiKey: "secret-key" };
 
   globalThis.fetch = mockFetch(async () => {
@@ -77,20 +91,39 @@ test("returns the original error when the request itself fails", async () => {
 });
 
 test("returns the expected error for each non-success status code", async () => {
-  const request = [{ numbers: ["254700000000"], message: "Hello", sender: "TEST" }];
+  const request = [
+    { numbers: ["254700000000"], message: "Hello", sender: "TEST" },
+  ];
   const options = { email: "user@example.com", apiKey: "secret-key" };
 
   const cases = [
-    { status: 404, message: "API endpoint not found. Please check the URL and try again." },
-    { status: 401, message: "Unauthorized. Please check your API key and email." },
-    { status: 403, message: "Forbidden. You do not have permission to access this resource." },
-    { status: 400, message: "Bad request. Please check the request payload and try again." },
+    {
+      status: 404,
+      message: "API endpoint not found. Please check the URL and try again.",
+    },
+    {
+      status: 401,
+      message: "Unauthorized. Please check your API key and email.",
+    },
+    {
+      status: 403,
+      message: "Forbidden. You do not have permission to access this resource.",
+    },
+    {
+      status: 400,
+      message: "Bad request. Please check the request payload and try again.",
+    },
     { status: 500, message: "Internal server error. Please try again later." },
-    { status: 418, message: "An unknown error occurred. Please try again later." },
+    {
+      status: 418,
+      message: "An unknown error occurred. Please try again later.",
+    },
   ];
 
   for (const testCase of cases) {
-    globalThis.fetch = mockFetch(async () => createResponse({ ok: false, status: testCase.status, body: {} })) as unknown as typeof fetch;
+    globalThis.fetch = mockFetch(async () =>
+      createResponse({ ok: false, status: testCase.status, body: {} }),
+    ) as unknown as typeof fetch;
     const [data, error] = await sendSMS(request, options);
 
     expect(data).toBeUndefined();
@@ -100,7 +133,9 @@ test("returns the expected error for each non-success status code", async () => 
 });
 
 test("returns the json parsing error when the response body cannot be parsed", async () => {
-  const request = [{ numbers: ["254700000000"], message: "Hello", sender: "TEST" }];
+  const request = [
+    { numbers: ["254700000000"], message: "Hello", sender: "TEST" },
+  ];
   const options = { email: "user@example.com", apiKey: "secret-key" };
 
   const malformedResponse = {
@@ -111,7 +146,9 @@ test("returns the json parsing error when the response body cannot be parsed", a
     },
   } as unknown as Response;
 
-  globalThis.fetch = mockFetch(async () => malformedResponse) as unknown as typeof fetch;
+  globalThis.fetch = mockFetch(
+    async () => malformedResponse,
+  ) as unknown as typeof fetch;
 
   const [data, error] = await sendSMS(request, options);
 

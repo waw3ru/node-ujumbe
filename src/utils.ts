@@ -1,8 +1,13 @@
 export const isNil = (e: unknown) => e === null || e === undefined;
 
-export const isEmpty = (e: unknown) => e === null || e === undefined || (typeof e === "string" && e.length === 0);
+export const isEmpty = (e: unknown) =>
+  e === null || e === undefined || (typeof e === "string" && e.length === 0);
 
-export const objectHasItems = (e: unknown) => e !== null && e !== undefined && typeof e === "object" && Object.keys(e as Record<string, unknown>).length > 0;
+export const objectHasItems = (e: unknown) =>
+  e !== null &&
+  e !== undefined &&
+  typeof e === "object" &&
+  Object.keys(e as Record<string, unknown>).length > 0;
 
 /**
  * Wraps a Promise in a `[data, error]` tuple, eliminating the need for
@@ -33,7 +38,9 @@ export const objectHasItems = (e: unknown) => e !== null && e !== undefined && t
  * const [order, error] = await useAsync<Order>(placeOrder(cart));
  * if (error instanceof ApiError) showToast(error.message);
  */
-export const useAsync = async <T = unknown>(input: Promise<T> | (() => Promise<T>)): Promise<[T, undefined] | [undefined, unknown]> => {
+export const useAsync = async <T = unknown>(
+  input: Promise<T> | (() => Promise<T>),
+): Promise<[T, undefined] | [undefined, unknown]> => {
   try {
     const response = await (typeof input === "function" ? input() : input);
     return [response, undefined];
@@ -70,7 +77,10 @@ export const useAsync = async <T = unknown>(input: Promise<T> | (() => Promise<T
  *
  * @see {@link useAsync} for the base wrapper without retry logic.
  */
-export const useAsyncWithRetry = async <T = unknown>(input: () => Promise<T>, retries = 3): Promise<[T, undefined] | [undefined, unknown]> => {
+export const useAsyncWithRetry = async <T = unknown>(
+  input: () => Promise<T>,
+  retries = 3,
+): Promise<[T, undefined] | [undefined, unknown]> => {
   let lastError: unknown;
 
   for (let attempt = 0; attempt < retries; attempt++) {
