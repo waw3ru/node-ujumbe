@@ -5,12 +5,14 @@
 This release is a major rewrite of the package structure and public API. The goal was to modernize the codebase, move the project to Bun, and simplify integration for newer TypeScript and JavaScript environments.
 
 ### Added
+
 - Migrated the project to Bun for development, testing, formatting, linting, and build workflows.
 - Added a TypeScript-first implementation with explicit request and response interfaces.
 - Added a modern package build pipeline with ESM, CommonJS, and declaration output.
 - Added automated tests covering successful requests, network failures, non-success HTTP statuses, and malformed JSON responses.
 
 ### Changed
+
 - Replaced the old Axios-based client with native `fetch` requests to the Ujumbe SMS gateway.
 - Replaced the previous class-based API with a simpler functional API.
 - The public entry point now exposes `sendSMS` rather than the older `Api` and `SMS` classes.
@@ -25,24 +27,22 @@ This release is a major rewrite of the package structure and public API. The goa
 Before:
 
 ```ts
-import { Api, SMS } from "ujumbesms";
+import { Api, SMS } from 'ujumbesms';
 
 const api = new Api({ email, apiKey });
-await api.queue(new SMS(["254700000000"], "Hello", "TEST"));
+await api.queue(new SMS(['254700000000'], 'Hello', 'TEST'));
 ```
 
 Now:
 
 ```ts
-import { sendSMS } from "ujumbesms";
+import { sendSMS } from 'ujumbesms';
 
-const [data, error] = await sendSMS(
-  [{ numbers: ["254700000000"], message: "Hello", sender: "TEST" }],
-  { email, apiKey },
-);
+const [data, error] = await sendSMS([{ numbers: ['254700000000'], message: 'Hello', sender: 'TEST' }], { email, apiKey });
 ```
 
 ### Breaking changes
+
 - Existing code that imports `Api` or `SMS` from the package root will need to be updated.
 - Any code that depends on the old `queue()` method or `SMS.serialize()` behavior must be rewritten to use `sendSMS`.
 - Code that expects Axios-style responses or the old response object shape will need to be adjusted.
