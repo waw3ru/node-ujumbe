@@ -110,5 +110,8 @@ export const sendSMS = async (
     ];
   }
 
-  return [payload, undefined];
+  return [
+    payload,
+    { error: undefined, incorrectNumbers: uniqueIncorrectNumbers },
+  ];
 };
