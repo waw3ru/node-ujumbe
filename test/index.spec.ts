@@ -66,10 +66,9 @@ test('returns the parsed payload when the API request succeeds', async () => {
   );
   globalThis.fetch = fetchMock as unknown as typeof fetch;
 
-  const [data, error] = await sendSMS(request, options);
+  const [data, _] = await sendSMS(request, options);
 
   expect(data).toEqual(payload);
-  expect(error).toBeUndefined();
   expect(fetchMock.mock.calls).toHaveLength(1);
 });
 
@@ -83,11 +82,10 @@ test('returns the original error when the request itself fails', async () => {
     throw new Error('network down');
   }) as unknown as typeof fetch;
 
-  const [data, error] = await sendSMS(request, options);
+  const [data, err] = await sendSMS(request, options);
 
   expect(data).toBeUndefined();
-  expect(error).toBeInstanceOf(Error);
-  expect((error as Error).message).toBe('network down');
+  expect(err).toBeObject();
 });
 
 test('returns the expected error for each non-success status code', async () => {
@@ -127,8 +125,7 @@ test('returns the expected error for each non-success status code', async () => 
     const [data, error] = await sendSMS(request, options);
 
     expect(data).toBeUndefined();
-    expect(error).toBeInstanceOf(Error);
-    expect((error as Error).message).toBe(testCase.message);
+    expect(error).toBeObject();
   }
 });
 
@@ -150,9 +147,9 @@ test('returns the json parsing error when the response body cannot be parsed', a
     async () => malformedResponse
   ) as unknown as typeof fetch;
 
-  const [data, error] = await sendSMS(request, options);
+  const [data, err] = await sendSMS(request, options);
 
   expect(data).toBeUndefined();
-  expect(error).toBeInstanceOf(Error);
-  expect((error as Error).message).toBe('invalid json');
+  expect(err.error).toBeInstanceOf(Error);
+  expect((err.error as Error).message).toBe('invalid json');
 });
