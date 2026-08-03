@@ -1,12 +1,12 @@
 export const isNil = (e: unknown) => e === null || e === undefined;
 
 export const isEmpty = (e: unknown) =>
-  e === null || e === undefined || (typeof e === "string" && e.length === 0);
+  e === null || e === undefined || (typeof e === 'string' && e.length === 0);
 
 export const objectHasItems = (e: unknown) =>
   e !== null &&
   e !== undefined &&
-  typeof e === "object" &&
+  typeof e === 'object' &&
   Object.keys(e as Record<string, unknown>).length > 0;
 
 /**
@@ -39,10 +39,10 @@ export const objectHasItems = (e: unknown) =>
  * if (error instanceof ApiError) showToast(error.message);
  */
 export const useAsync = async <T = unknown>(
-  input: Promise<T> | (() => Promise<T>),
+  input: Promise<T> | (() => Promise<T>)
 ): Promise<[T, undefined] | [undefined, unknown]> => {
   try {
-    const response = await (typeof input === "function" ? input() : input);
+    const response = await (typeof input === 'function' ? input() : input);
     return [response, undefined];
   } catch (error) {
     return [undefined, error];
@@ -79,7 +79,7 @@ export const useAsync = async <T = unknown>(
  */
 export const useAsyncWithRetry = async <T = unknown>(
   input: () => Promise<T>,
-  retries = 3,
+  retries = 3
 ): Promise<[T, undefined] | [undefined, unknown]> => {
   let lastError: unknown;
 
