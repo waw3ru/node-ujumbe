@@ -1,6 +1,7 @@
 import {
   formatIncompletePhoneNumber,
   isValidPhoneNumber,
+  parsePhoneNumberFromString,
 } from 'libphonenumber-js';
 
 import { ISMSBag } from './@types';
@@ -130,8 +131,15 @@ export const validateSMSBag = (data: ISMSBag[]): [ISMSBag[], string[]] => {
 
     for (const num of item.numbers) {
       const formattedNum = formatIncompletePhoneNumber(num);
-      if (isValidPhoneNumber(formattedNum)) {
-        correctNumbersForBag.push(formattedNum);
+      const parsedNumber = parsePhoneNumberFromString(formattedNum);
+      const normalizedNum = parsedNumber?.isValid()
+        ? parsedNumber.format('E.164')
+        : formattedNum.startsWith('+')
+          ? formattedNum
+          : `+${formattedNum}`;
+
+      if (isValidPhoneNumber(normalizedNum)) {
+        correctNumbersForBag.push(normalizedNum);
       } else {
         incorrectNumbersForBag.push(num);
       }

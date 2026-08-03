@@ -24,13 +24,19 @@ const sendSMSAPIRequest = async (data: ISMSBag[], opts: ISMSRequestOptions) => {
   });
 };
 
-export const sendSMS = async (data: ISMSBag[], opts: ISMSRequestOptions) => {
-  let processedData: ISMSBag[];
-  let incorrectNumbers: string[];
+export const sendSMS = async (
+  data: ISMSBag[],
+  opts: ISMSRequestOptions
+): Promise<
+  [
+    ISMSResponse | undefined,
+    Error | { error: Error | unknown; incorrectNumbers: string[] } | any,
+  ]
+> => {
+  let processedData: ISMSBag[], uniqueIncorrectNumbers: string[];
+
   try {
-    const [_processedData, _incorrectNumbers] = validateSMSBag(data);
-    processedData = _processedData;
-    incorrectNumbers = _incorrectNumbers;
+    [processedData, uniqueIncorrectNumbers] = validateSMSBag(data);
   } catch (e: Error | unknown) {
     return [undefined, e];
   }
@@ -47,9 +53,11 @@ export const sendSMS = async (data: ISMSBag[], opts: ISMSRequestOptions) => {
   const [response, error] = await useAsync(() =>
     sendSMSAPIRequest(processedData, opts)
   );
+
   if (error) {
     return [undefined, error];
   }
+
   if (!response || !response?.ok) {
     switch (response?.status) {
       case 404:
@@ -90,12 +98,17 @@ export const sendSMS = async (data: ISMSBag[], opts: ISMSRequestOptions) => {
         ];
     }
   }
-  const res = await useAsync<ISMSResponse>(
+
+  const [payload, payloadError] = await useAsync<ISMSResponse>(
     () => response.json() as Promise<ISMSResponse>
   );
 
-  return {
-    invalidPhoneNumbers: incorrectNumbers,
-    res,
-  };
+  if (payloadError) {
+    return [
+      undefined,
+      { error: payloadError, incorrectNumbers: uniqueIncorrectNumbers },
+    ];
+  }
+
+  return [payload, undefined];
 };
