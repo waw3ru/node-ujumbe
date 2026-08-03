@@ -1,5 +1,5 @@
 import type { ISMSBag, ISMSRequestOptions, ISMSResponse } from './@types';
-import { useAsync } from './utils';
+import { useAsync, validateSMSBag } from './utils';
 
 const sendSMSAPIRequest = async (data: ISMSBag[], opts: ISMSRequestOptions) => {
   const url = new URL('/api/messaging', 'http://ujumbesms.co.ke');
@@ -24,11 +24,29 @@ const sendSMSAPIRequest = async (data: ISMSBag[], opts: ISMSRequestOptions) => {
   });
 };
 
-export const sendSMS = async (
-  data: ISMSBag[],
-  opts: ISMSRequestOptions
-): Promise<[ISMSResponse | undefined, Error | unknown]> => {
-  const [response, error] = await useAsync(() => sendSMSAPIRequest(data, opts));
+export const sendSMS = async (data: ISMSBag[], opts: ISMSRequestOptions) => {
+  let processedData: ISMSBag[];
+  let incorrectNumbers: string[];
+  try {
+    const [_processedData, _incorrectNumbers] = validateSMSBag(data);
+    processedData = _processedData;
+    incorrectNumbers = _incorrectNumbers;
+  } catch (e: Error | unknown) {
+    return [undefined, e];
+  }
+
+  if (processedData.length === 0) {
+    return [
+      undefined,
+      new Error(
+        'No valid phone numbers found in any SMS bag after validation.'
+      ),
+    ];
+  }
+
+  const [response, error] = await useAsync(() =>
+    sendSMSAPIRequest(processedData, opts)
+  );
   if (error) {
     return [undefined, error];
   }
@@ -72,7 +90,12 @@ export const sendSMS = async (
         ];
     }
   }
-  return await useAsync<ISMSResponse>(
+  const res = await useAsync<ISMSResponse>(
     () => response.json() as Promise<ISMSResponse>
   );
+
+  return {
+    invalidPhoneNumbers: incorrectNumbers,
+    res,
+  };
 };
