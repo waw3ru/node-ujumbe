@@ -1,38 +1,28 @@
 {
     "compilerOptions": {
-		"target": "es5",
-		"module": "commonjs",
-		"noImplicitAny": true,
-		"noEmitOnError": true,
-		"suppressImplicitAnyIndexErrors": true,
-		"removeComments": true,
-        "preserveConstEnums": true,
-        "alwaysStrict": true,
-        "pretty": true,
+        "module": "esnext",
+        "moduleResolution": "bundler",
+        "resolvePackageJsonExports": true,
+        "esModuleInterop": true,
+        "isolatedModules": true,
         "declaration": true,
-        "moduleResolution": "node",
-        "allowSyntheticDefaultImports": false,
-        "lib": [
-            "es2015",
-            "es2015.promise",
-            "es5"
-        ],
-        "types": [
-            "node",
-            "mocha"
-        ]
-    },
-    "exclude": [
-        "node_modules",
-        "samples",
-        "**/*.js"
-    ],
-    "files": [
-        "api.ts",
-        "sms.ts",
-        "index.ts"
-    ],
-    "include": [
-        "test"
-    ]
+        "removeComments": true,
+        "emitDecoratorMetadata": true,
+        "experimentalDecorators": true,
+        "allowSyntheticDefaultImports": true,
+        "target": "esnext",
+        "sourceMap": true,
+        "outDir": "./dist",
+        "incremental": true,
+        "skipLibCheck": true,
+        "strictNullChecks": true,
+        "forceConsistentCasingInFileNames": true,
+        "noImplicitAny": false,
+        "strictBindCallApply": false,
+        "noFallthroughCasesInSwitch": false,
+        "strict": true,
+
+        // "bun-types" is the important part
+        "types": ["bun-types"]
+    }
 }
