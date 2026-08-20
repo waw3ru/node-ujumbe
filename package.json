@@ -5,20 +5,20 @@
         "dist"
     ],
     "dependencies": {
-        "libphonenumber-js": "^1.13.9"
+        "libphonenumber-js": "^1.13.11"
     },
     "peerDependencies": {
         "libphonenumber-js": "^1.13.9"
     },
     "devDependencies": {
-        "typescript-eslint": "^8.65.0",
+        "typescript-eslint": "^8.67.0",
         "@eslint/js": "^10.0.1",
         "eslint-plugin-import": "^2.32.0",
         "eslint-plugin-simple-import-sort": "^14.0.0",
-        "globals": "^17.8.0",
+        "globals": "^17.11.0",
         "@types/bun": "latest",
         "prettier": "^3.9.6",
-        "typescript": "^5"
+        "typescript": "^5.9.3"
     },
     "type": "module",
     "main": "./dist/index.cjs",
