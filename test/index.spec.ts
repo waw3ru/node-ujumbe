@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, expect, mock, test } from 'bun:test';
+import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 
 import type { ISMSResponse } from '../src/@types';
 import { sendSMS } from '../src/index';
@@ -13,7 +13,7 @@ type MockResponseBody = Partial<ISMSResponse> | Record<string, unknown>;
 
 const mockFetch = (
   implementation: (...args: Parameters<typeof fetch>) => Promise<Response>
-): FetchMock => mock(implementation) as unknown as FetchMock;
+): FetchMock => vi.fn(implementation) as unknown as FetchMock;
 
 const createResponse = (options: {
   ok?: boolean;
@@ -120,7 +120,7 @@ test('returns the original error when the request itself fails', async () => {
   const [data, err] = await sendSMS(request, options);
 
   expect(data).toBeUndefined();
-  expect(err).toBeObject();
+  expect(err).toBeTypeOf('object');
 });
 
 /**
@@ -173,7 +173,7 @@ test('returns the expected error for each non-success status code', async () => 
     const [data, error] = await sendSMS(request, options);
 
     expect(data).toBeUndefined();
-    expect(error).toBeObject();
+    expect(error).toBeTypeOf('object');
   }
 });
 

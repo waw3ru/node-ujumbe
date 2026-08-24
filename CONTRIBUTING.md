@@ -10,7 +10,7 @@ When reporting a bug, include:
 
 - A concise description of the observed and expected behavior.
 - The smallest input or code sample that reproduces the problem.
-- The Bun, operating system, and package version involved.
+- The Vitest, operating system, and package version involved.
 - Relevant error messages or test output.
 
 Do not include API keys, email credentials, phone numbers belonging to real people, or other private data in issues, pull requests, tests, or logs. Report security vulnerabilities privately to the maintainers rather than opening a public issue.
@@ -21,7 +21,7 @@ Do not include API keys, email credentials, phone numbers belonging to real peop
 - Git.
 - A working TypeScript development environment. Dependencies are installed from `package.json`.
 
-This project uses Bun for package installation, scripts, testing, and bundling. Use the repository's Bun commands rather than substituting npm, Yarn, or pnpm commands.
+This project uses Bun for package installation, scripts, and bundling, and Vitest for testing. Use the repository's Bun commands for project scripts and Vitest for the test runner.
 
 ## Local Setup
 
@@ -39,12 +39,12 @@ Run the complete local verification suite:
 bun run ci:check
 ```
 
-The command runs formatting verification, ESLint, the Bun test suite, and all build targets. Run the individual checks while iterating:
+The command runs formatting verification, ESLint, the Vitest suite, and all build targets. Run the individual checks while iterating:
 
 ```bash
 bun run format:check  # Check Prettier formatting
 bun run lint          # Check src/ and test/ TypeScript files
-bun test              # Run all tests
+bun run test          # Run all tests with Vitest
 bun run build         # Build ESM, CommonJS, and declaration output
 ```
 
@@ -90,10 +90,10 @@ The client sends requests to the UjumbeSMS messaging endpoint with the caller's 
 
 ## Tests
 
-Add or update tests whenever behavior changes. Tests use Bun's built-in test runner:
+Add or update tests whenever behavior changes. Tests use Vitest:
 
 ```ts
-import { expect, test } from 'bun:test';
+import { expect, test } from 'vitest';
 
 test('describes the behavior being protected', () => {
   expect(actualValue).toBe(expectedValue);
@@ -111,8 +111,8 @@ Good tests should:
 Run a focused test file while developing:
 
 ```bash
-bun test test/index.spec.ts
-bun test test/util.spec.ts
+bun run test -- test/index.spec.ts
+bun run test -- test/validate.spec.ts
 ```
 
 Before requesting review, run `bun run ci:check` and include any known limitations in the pull request description.
