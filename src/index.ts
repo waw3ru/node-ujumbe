@@ -1,28 +1,7 @@
 import type { ISMSBag, ISMSRequestOptions, ISMSResponse } from './@types';
-import { useAsync, validateSMSBag } from './utils';
-
-const sendSMSAPIRequest = async (data: ISMSBag[], opts: ISMSRequestOptions) => {
-  const url = new URL('/api/messaging', 'http://ujumbesms.co.ke');
-  const headers = new Headers({
-    email: opts.email,
-    'x-Authorization': opts.apiKey,
-    'Content-Type': 'application/json',
-  });
-  const body = JSON.stringify({
-    data: data.map(item => ({
-      message_bag: {
-        numbers: item.numbers.join(','),
-        message: item.message,
-        sender: item.sender,
-      },
-    })),
-  });
-  return fetch(url, {
-    method: 'POST',
-    headers,
-    body,
-  });
-};
+import { sendSMSAPIRequest } from './api-request';
+import { useAsync } from './hooks';
+import { validateSMSBag } from './validate';
 
 export const sendSMS = async (
   data: ISMSBag[],
