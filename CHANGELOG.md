@@ -1,15 +1,18 @@
 # Changelog
 
-## Unreleased - PR #1: Bun migration and API refactor
+## Unreleased - PRs #3-#12
 
-This release is a major rewrite of the package structure and public API. The goal was to modernize the codebase, move the project to Bun, and simplify integration for newer TypeScript and JavaScript environments.
+This release continues the migration to a typed, modular SMS client and improves the development and testing workflow. It includes the original Bun/API refactor, the SMS request and validation implementation, TypeScript declaration updates, and the Vitest test-runner migration.
 
 ### Added
 
 - Migrated the project to Bun for development, testing, formatting, linting, and build workflows.
 - Added a TypeScript-first implementation with explicit request and response interfaces.
 - Added a modern package build pipeline with ESM, CommonJS, and declaration output.
-- Added automated tests covering successful requests, network failures, non-success HTTP statuses, and malformed JSON responses.
+- Added automated tests covering successful requests, network failures, non-success HTTP statuses, malformed JSON responses, phone-number validation, utility helpers, and large batches.
+- Added ESLint configuration and TypeScript compiler settings for consistent static checks.
+- Added generated TypeScript declarations for the public API, request types, response types, and utility functions.
+- Added Vitest as the test runner and migrated the test suite from Bun's test runner.
 
 ### Changed
 
@@ -21,6 +24,15 @@ This release is a major rewrite of the package structure and public API. The goa
   - `numbers` is now an array of strings instead of a comma-separated string
 - Error handling now returns a tuple in the form `[data, error]` instead of relying on the previous promise/response model.
 - The response contract is now based on a typed `ISMSResponse` object with `status` and `meta` fields, rather than the older `apiResponse`, `resStatus`, and `resRaw` structure.
+- SMS request handling is split into focused modules for API requests, async helpers, constants, and phone-number validation.
+- Phone numbers are normalized to E.164 format when valid, while invalid numbers are returned separately and valid numbers in the same batch continue to be processed.
+- Test assertions and mocks now use Vitest equivalents, including `vi.fn` and Vitest-supported matchers.
+- Dependencies and test coverage were updated, and generated distribution output is ignored by Git.
+
+### Fixed
+
+- Preserved the underlying JSON parsing error when a successful gateway response cannot be decoded.
+- Updated error assertions to verify returned error values without depending on Bun-only matchers.
 
 ### New API example
 
@@ -46,5 +58,5 @@ const [data, error] = await sendSMS([{ numbers: ['254700000000'], message: 'Hell
 - Existing code that imports `Api` or `SMS` from the package root will need to be updated.
 - Any code that depends on the old `queue()` method or `SMS.serialize()` behavior must be rewritten to use `sendSMS`.
 - Code that expects Axios-style responses or the old response object shape will need to be adjusted.
-- Phone number validation and normalization are no longer handled automatically by the library; invalid numbers are passed through as provided.
+- Phone number validation and normalization are now handled by the library. Valid numbers are normalized before sending, and invalid numbers are reported in the result.
 - Consumers using Node should use a runtime with support for global `fetch` (for example, Node 18+), or a compatible polyfill/runtime.
