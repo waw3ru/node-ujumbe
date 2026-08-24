@@ -50,3 +50,62 @@ test('validateSMSBag_handles_a_stress_batch_without_dropping_valid_entries', () 
   );
   expect(invalidNumbers).toEqual([]);
 });
+
+/**
+ * What: validateSMSBag should report each invalid phone number only once,
+ * even when the same invalid value appears in multiple message bags.
+ * How: Supplies duplicate invalid values alongside a valid number in two
+ * bags and checks that valid bags are retained while invalidNumbers is
+ * reduced to unique values in encounter order.
+ * Why: callers use invalidNumbers to give actionable feedback; duplicate
+ * entries would create noisy or misleading error reports.
+ */
+test('validateSMSBag_deduplicates_invalid_numbers_across_bags', () => {
+  const [processedData, invalidNumbers] = validateSMSBag([
+    {
+      numbers: ['not-a-number', '+254700000000', 'not-a-number'],
+      message: 'Hello',
+      sender: 'TEST',
+    },
+    {
+      numbers: ['another-invalid-number', 'not-a-number'],
+      message: 'Hello again',
+      sender: 'TEST',
+    },
+  ]);
+
+  expect(processedData).toHaveLength(1);
+  expect(processedData[0].numbers).toEqual(['+254700000000']);
+  expect(invalidNumbers).toEqual(['not-a-number', 'another-invalid-number']);
+});
+
+/**
+ * What: validateSMSBag should reject an empty input or any SMS bag missing
+ * a required numbers, message, or sender value.
+ * How: Runs each malformed input through the validator and checks that it
+ * throws the documented validation error instead of processing partial data.
+ * Why: required-field validation protects request construction from malformed
+ * payloads and gives callers one consistent failure contract.
+ */
+test('validateSMSBag_rejects_empty_input_and_missing_required_fields', () => {
+  const requiredFieldsError =
+    'Each SMS bag must have a non-empty numbers array, a non-empty message string, and a non-empty sender string.';
+  const invalidInputs = [
+    [],
+    [{}],
+    [{ numbers: [] }],
+    [{ message: 'Hello', sender: 'TEST' }],
+    [{ numbers: ['+254700000000'], sender: 'TEST' }],
+    [{ numbers: ['+254700000000'], message: '', sender: 'TEST' }],
+    [{ numbers: ['+254700000000'], message: 'Hello' }],
+    [{ numbers: ['+254700000000'], message: 'Hello', sender: '' }],
+  ];
+
+  for (const input of invalidInputs) {
+    expect(() => validateSMSBag(input as never)).toThrowError(
+      input.length === 0
+        ? 'Data must be a non-empty array of SMS bags.'
+        : requiredFieldsError
+    );
+  }
+});

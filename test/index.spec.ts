@@ -53,6 +53,9 @@ afterEach(() => {
  * ISMSResponse contract, not an internal detail -- and checks the call
  * count to guard against accidental retries or duplicate requests on a
  * plain success path.
+ * Why (contract): also checks the exact gateway URL, method, credentials,
+ * content type, and serialized message-bag body so changes to the wire
+ * contract cannot pass while only preserving the parsed response.
  */
 test('returns_the_parsed_payload_when_the_api_request_succeeds', async () => {
   const payload = {
@@ -74,7 +77,12 @@ test('returns_the_parsed_payload_when_the_api_request_succeeds', async () => {
     },
   };
   const request = [
-    { numbers: ['254700000000'], message: 'Hello', sender: 'TEST' },
+    {
+      numbers: ['254700000000', '+254700000001'],
+      message: 'Hello',
+      sender: 'TEST',
+    },
+    { numbers: ['254700000002'], message: 'Second message', sender: 'APP' },
   ];
   const options = { email: 'user@example.com', apiKey: 'secret-key' };
 
@@ -87,6 +95,33 @@ test('returns_the_parsed_payload_when_the_api_request_succeeds', async () => {
 
   expect(data).toEqual(payload);
   expect(fetchMock.mock.calls).toHaveLength(1);
+
+  const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+  expect(url).toBe('http://ujumbesms.co.ke/api/messaging');
+  expect(init.method).toBe('POST');
+  expect(Object.fromEntries(new Headers(init.headers).entries())).toEqual({
+    'content-type': 'application/json',
+    email: 'user@example.com',
+    'x-authorization': 'secret-key',
+  });
+  expect(JSON.parse(init.body as string)).toEqual({
+    data: [
+      {
+        message_bag: {
+          numbers: '+254700000000,+254700000001',
+          message: 'Hello',
+          sender: 'TEST',
+        },
+      },
+      {
+        message_bag: {
+          numbers: '+254700000002',
+          message: 'Second message',
+          sender: 'APP',
+        },
+      },
+    ],
+  });
 });
 
 /**
@@ -101,11 +136,9 @@ test('returns_the_parsed_payload_when_the_api_request_succeeds', async () => {
  * throw" and that every outcome "comes back through that same return
  * value" -- this verifies that guarantee holds for a network-level
  * failure specifically, not just an HTTP error response.
- * Why (calibration): only checks that the second tuple element is an
- * object (some error was reported) and the first is undefined, without
- * asserting on the error's exact message or type -- any implementation
- * that surfaces a network failure through the return value, rather than
- * an uncaught throw, satisfies this.
+ * Why (calibration): checks that the exact rejection Error is returned,
+ * preserving both its identity and message instead of allowing an
+ * unrelated generic error to satisfy the test.
  */
 test('returns_the_original_error_when_the_request_itself_fails', async () => {
   const request = [
@@ -113,14 +146,16 @@ test('returns_the_original_error_when_the_request_itself_fails', async () => {
   ];
   const options = { email: 'user@example.com', apiKey: 'secret-key' };
 
+  const failure = new Error('network down');
   globalThis.fetch = mockFetch(async () => {
-    throw new Error('network down');
+    throw failure;
   }) as unknown as typeof fetch;
 
   const [data, err] = await sendSMS(request, options);
 
   expect(data).toBeUndefined();
-  expect(err).toBeTypeOf('object');
+  expect(err).toBe(failure);
+  expect((err as Error).message).toBe('network down');
 });
 
 /**
@@ -132,9 +167,9 @@ test('returns_the_original_error_when_the_request_itself_fails', async () => {
  * Why (alignment): instruction.md requires that sendSMS surface gateway
  * errors through its return value, not by throwing -- this verifies that
  * guarantee holds for all documented error cases.
- * Why (calibration): checks only the error message for each case, since the
- * exact error object structure is not part of the public API contract,
- * but the messages are intended to be user-facing and consistent.
+ * Why (calibration): checks the exact user-facing message for every status,
+ * preventing all non-success responses from being handled by one generic
+ * fallback.
  */
 test('returns_the_expected_error_for_each_non-success_status_code', async () => {
   const request = [
@@ -169,7 +204,8 @@ test('returns_the_expected_error_for_each_non-success_status_code', async () => 
     const [data, error] = await sendSMS(request, options);
 
     expect(data).toBeUndefined();
-    expect(error).toBeTypeOf('object');
+    expect(error).toBeInstanceOf(Error);
+    expect((error as Error).message).toBe(testCase.message);
   }
 });
 
@@ -215,5 +251,5 @@ test('returns_the_json_parsing_error_when_the_response_body_cannot_be_parsed', a
 
   expect(data).toBeUndefined();
   expect(err.error).toBeInstanceOf(Error);
-  expect((err.error as Error).message).toBeTruthy();
+  expect((err.error as Error).message).toBe('invalid json');
 });
