@@ -13,7 +13,7 @@ import { validateSMSBag } from '../src/validate';
  * performance shortcuts that silently truncate large recipient lists --
  * a real campaign could plausibly send to hundreds of numbers at once.
  */
-test('validateSMSBag handles a large batch of phone numbers', () => {
+test('validateSMSBag_handles_a_large_batch_of_phone_numbers', () => {
   const manyNumbers = Array.from({ length: 250 }, () => '254700000000');
   const [processedData, invalidNumbers] = validateSMSBag([
     {
@@ -38,7 +38,7 @@ test('validateSMSBag handles a large batch of phone numbers', () => {
  * looping over multiple bags (e.g. state leaking or being reset
  * incorrectly between bags) wouldn't be caught by a single-bag test.
  */
-test('validateSMSBag handles a stress batch without dropping valid entries', () => {
+test('validateSMSBag_handles_a_stress_batch_without_dropping_valid_entries', () => {
   const manyBags = Array.from({ length: 100 }, () => ({
     numbers: ['254700000000'],
     message: 'Hello',

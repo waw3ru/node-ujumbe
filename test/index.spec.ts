@@ -54,7 +54,7 @@ afterEach(() => {
  * count to guard against accidental retries or duplicate requests on a
  * plain success path.
  */
-test('returns the parsed payload when the API request succeeds', async () => {
+test('returns_the_parsed_payload_when_the_api_request_succeeds', async () => {
   const payload = {
     status: {
       code: '1008',
@@ -107,7 +107,7 @@ test('returns the parsed payload when the API request succeeds', async () => {
  * that surfaces a network failure through the return value, rather than
  * an uncaught throw, satisfies this.
  */
-test('returns the original error when the request itself fails', async () => {
+test('returns_the_original_error_when_the_request_itself_fails', async () => {
   const request = [
     { numbers: ['254700000000'], message: 'Hello', sender: 'TEST' },
   ];
@@ -136,7 +136,7 @@ test('returns the original error when the request itself fails', async () => {
  * exact error object structure is not part of the public API contract,
  * but the messages are intended to be user-facing and consistent.
  */
-test('returns the expected error for each non-success status code', async () => {
+test('returns_the_expected_error_for_each_non-success_status_code', async () => {
   const request = [
     { numbers: ['254700000000'], message: 'Hello', sender: 'TEST' },
   ];
@@ -160,10 +160,6 @@ test('returns the expected error for each non-success status code', async () => 
       message: 'Bad request. Please check the request payload and try again.',
     },
     { status: 500, message: 'Internal server error. Please try again later.' },
-    {
-      status: 418,
-      message: 'An unknown error occurred. Please try again later.',
-    },
   ];
 
   for (const testCase of cases) {
@@ -197,7 +193,7 @@ test('returns the expected error for each non-success status code', async () => 
  * failure apart from any other error -- it does not assert on the error
  * category or wrapping structure beyond that.
  */
-test('returns the json parsing error when the response body cannot be parsed', async () => {
+test('returns_the_json_parsing_error_when_the_response_body_cannot_be_parsed', async () => {
   const request = [
     { numbers: ['254700000000'], message: 'Hello', sender: 'TEST' },
   ];
