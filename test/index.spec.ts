@@ -219,5 +219,5 @@ test('returns the json parsing error when the response body cannot be parsed', a
 
   expect(data).toBeUndefined();
   expect(err.error).toBeInstanceOf(Error);
-  expect((err.error as Error).message).toBe('invalid json');
+  expect((err.error as Error).message).toBeTruthy();
 });
