@@ -243,8 +243,11 @@ test('returns_the_json_parsing_error_when_the_response_body_cannot_be_parsed', a
  * dropping recipients or reporting valid numbers as invalid.
  * How: Sends 250 valid recipients through the public entrypoint and checks
  * the successful result and serialized request contain all 250 numbers.
- * Why: large batches exercise the validation and request-building boundary,
- * where truncation or incorrect filtering would affect real campaigns.
+ * Why (root cause): array iteration, phone-number normalization, or request
+ * serialization could silently truncate a large batch or misclassify valid
+ * recipients, leaving a campaign partially delivered.
+ * Why (calibration): checks the exact recipient count and an empty invalid list
+ * while allowing the gateway response to remain the simple mocked success.
  */
 test('sendSMS_handles_a_large_batch_of_valid_phone_numbers', async () => {
   const manyNumbers = Array.from({ length: 250 }, () => '+254700000000');
@@ -273,8 +276,10 @@ test('sendSMS_handles_a_large_batch_of_valid_phone_numbers', async () => {
  * entrypoint without losing bags or incorrectly reporting invalid numbers.
  * How: Sends 100 valid bags and verifies all 100 appear in the request and
  * the returned invalid-number list is empty.
- * Why: exercises the across-bags validation path separately from a large
- * recipient list within one bag.
+ * Why (root cause): state kept at the wrong scope, resetting the processed
+ * list, or appending only the last bag could drop messages across iterations.
+ * Why (calibration): checks the exact number of serialized bags and no invalid
+ * values, which distinguishes cross-bag loss without asserting internals.
  */
 test('sendSMS_handles_many_valid_message_bags', async () => {
   const manyBags = Array.from({ length: 100 }, () => ({
@@ -302,8 +307,11 @@ test('sendSMS_handles_many_valid_message_bags', async () => {
  * bag while still sending another bag that contains a valid number.
  * How: Sends duplicate invalid values in one bag and a valid value in a
  * second bag, then checks the result and request contain only valid data.
- * Why: callers need unique actionable feedback without losing deliverable
- * messages or sending malformed recipient data to the gateway.
+ * Why (root cause): collecting invalid values without deduplication would
+ * produce repeated feedback, while retaining an invalid-only bag would send
+ * malformed data or prevent valid bags from being delivered.
+ * Why (calibration): checks the exact unique invalid list and filtered body,
+ * directly distinguishing both observable contract requirements.
  */
 test('sendSMS_deduplicates_invalid_numbers_and_drops_invalid_only_bags', async () => {
   const request = [
@@ -354,8 +362,11 @@ test('sendSMS_deduplicates_invalid_numbers_and_drops_invalid_only_bags', async (
  * and for every missing or empty required message-bag field.
  * How: Passes each malformed value through sendSMS and checks the returned
  * error while ensuring validation never reaches the gateway request.
- * Why: the public API must reject malformed bags consistently without
- * throwing or attempting to send partial request data.
+ * Why (root cause): missing runtime fields can bypass TypeScript at the
+ * JavaScript boundary; processing them could cause malformed requests or
+ * downstream property errors instead of a controlled result.
+ * Why (calibration): covers empty input and every required-field variant, but
+ * checks only for an Error with a non-empty message so wording can evolve.
  */
 test('sendSMS_returns_errors_for_empty_or_incomplete_message_bags', async () => {
   const invalidInputs = [
