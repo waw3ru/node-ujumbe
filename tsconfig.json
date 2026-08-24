@@ -13,6 +13,7 @@
         "target": "esnext",
         "sourceMap": true,
         "outDir": "./dist",
+        "declarationDir": "./@types",
         "incremental": true,
         "skipLibCheck": true,
         "strictNullChecks": true,
