@@ -29,6 +29,13 @@ This release continues the migration to a typed, modular SMS client and improves
 - Test assertions and mocks now use Vitest equivalents, including `vi.fn` and Vitest-supported matchers.
 - Dependencies and test coverage were updated, and generated distribution output is ignored by Git.
 
+### Test coverage
+
+- Consolidated the validation scenarios into `test/index.spec.ts` and exercised them through the public `sendSMS` entrypoint.
+- Added coverage for large recipient batches, multiple message bags, duplicate invalid-number reporting, invalid-only bags being dropped while valid bags are sent, empty input, and missing or empty message-bag fields.
+- Added exact request-contract assertions for the gateway URL, HTTP method, credentials, content type, nested message-bag payload, and comma-separated recipients.
+- Calibrated failure tests to verify error categories and preserved error causes without coupling behavior tests to changeable error-message wording.
+
 ### Fixed
 
 - Preserved the underlying JSON parsing error when a successful gateway response cannot be decoded.
