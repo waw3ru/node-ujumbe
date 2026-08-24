@@ -18,7 +18,8 @@
         "globals": "^17.11.0",
         "@types/bun": "latest",
         "prettier": "^3.9.6",
-        "typescript": "^5.9.3"
+        "typescript": "^5.9.3",
+        "vitest": "^3.2.4"
     },
     "type": "module",
     "main": "./dist/index.cjs",
@@ -35,7 +36,7 @@
         "lint": "eslint '{src,test}/**/*.ts'",
         "format": "prettier --write .",
         "format:check": "prettier --check .",
-        "test": "bun test",
+        "test": "vitest run",
         "build": "bun run build:esm && bun run build:cjs && bun run build:types",
         "build:esm": "bun build ./src/index.ts --outdir ./dist --target node --format esm --entry-naming index.js",
         "build:cjs": "bun build ./src/index.ts --outdir ./dist --target node --format cjs --entry-naming index.cjs",
