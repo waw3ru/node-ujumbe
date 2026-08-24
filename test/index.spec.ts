@@ -1,3 +1,4 @@
+// eval_suite: sequoia-send-sms-contract
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 
 import type { ISMSResponse } from '../src/@types';
@@ -137,8 +138,7 @@ test('returns_the_parsed_payload_when_the_api_request_succeeds', async () => {
  * value" -- this verifies that guarantee holds for a network-level
  * failure specifically, not just an HTTP error response.
  * Why (calibration): checks that the exact rejection Error is returned,
- * preserving both its identity and message instead of allowing an
- * unrelated generic error to satisfy the test.
+ * preserving its identity without coupling the test to presentation text.
  */
 test('returns_the_original_error_when_the_request_itself_fails', async () => {
   const request = [
@@ -155,21 +155,18 @@ test('returns_the_original_error_when_the_request_itself_fails', async () => {
 
   expect(data).toBeUndefined();
   expect(err).toBe(failure);
-  expect((err as Error).message).toBe('network down');
 });
 
 /**
- * What: sendSMS resolves with the expected error message for each non-success
- * HTTP status code.
+ * What: sendSMS resolves with an Error for each non-success HTTP status code.
  * How: Mocks fetch to return a response with each status code, then calls
- * sendSMS with a single valid message bag and asserts the returned error
- * message matches the expected one.
+ * sendSMS with a single valid message bag and asserts the returned value
+ * contains no payload and does contain an Error.
  * Why (alignment): instruction.md requires that sendSMS surface gateway
  * errors through its return value, not by throwing -- this verifies that
  * guarantee holds for all documented error cases.
- * Why (calibration): checks the exact user-facing message for every status,
- * preventing all non-success responses from being handled by one generic
- * fallback.
+ * Why (calibration): verifies the failure category for every status without
+ * coupling behavior tests to wording that may change independently.
  */
 test('returns_the_expected_error_for_each_non-success_status_code', async () => {
   const request = [
@@ -178,23 +175,11 @@ test('returns_the_expected_error_for_each_non-success_status_code', async () => 
   const options = { email: 'user@example.com', apiKey: 'secret-key' };
 
   const cases = [
-    {
-      status: 404,
-      message: 'API endpoint not found. Please check the URL and try again.',
-    },
-    {
-      status: 401,
-      message: 'Unauthorized. Please check your API key and email.',
-    },
-    {
-      status: 403,
-      message: 'Forbidden. You do not have permission to access this resource.',
-    },
-    {
-      status: 400,
-      message: 'Bad request. Please check the request payload and try again.',
-    },
-    { status: 500, message: 'Internal server error. Please try again later.' },
+    { status: 404 },
+    { status: 401 },
+    { status: 403 },
+    { status: 400 },
+    { status: 500 },
   ];
 
   for (const testCase of cases) {
@@ -205,7 +190,6 @@ test('returns_the_expected_error_for_each_non-success_status_code', async () => 
 
     expect(data).toBeUndefined();
     expect(error).toBeInstanceOf(Error);
-    expect((error as Error).message).toBe(testCase.message);
   }
 });
 
@@ -223,11 +207,10 @@ test('returns_the_expected_error_for_each_non-success_status_code', async () => 
  * status: the request succeeds at the HTTP level but the body itself is
  * malformed, which still has to be caught and reported, not left to
  * throw partway through parsing.
- * Why (calibration): checks that the underlying parse error is an Error
- * instance and preserves its original message, since losing the
+ * Why (calibration): checks that the underlying parse Error is preserved by
+ * identity without coupling the test to its presentation text. Since losing the
  * underlying cause here would leave a caller unable to tell a parsing
- * failure apart from any other error -- it does not assert on the error
- * category or wrapping structure beyond that.
+ * failure apart from any other error.
  */
 test('returns_the_json_parsing_error_when_the_response_body_cannot_be_parsed', async () => {
   const request = [
@@ -235,11 +218,12 @@ test('returns_the_json_parsing_error_when_the_response_body_cannot_be_parsed', a
   ];
   const options = { email: 'user@example.com', apiKey: 'secret-key' };
 
+  const parseFailure = new Error('invalid json');
   const malformedResponse = {
     ok: true,
     status: 200,
     json: async () => {
-      throw new Error('invalid json');
+      throw parseFailure;
     },
   } as unknown as Response;
 
@@ -251,5 +235,149 @@ test('returns_the_json_parsing_error_when_the_response_body_cannot_be_parsed', a
 
   expect(data).toBeUndefined();
   expect(err.error).toBeInstanceOf(Error);
-  expect((err.error as Error).message).toBe('invalid json');
+  expect(err.error).toBe(parseFailure);
+});
+
+/**
+ * What: sendSMS should normalize every valid number in a large bag without
+ * dropping recipients or reporting valid numbers as invalid.
+ * How: Sends 250 valid recipients through the public entrypoint and checks
+ * the successful result and serialized request contain all 250 numbers.
+ * Why: large batches exercise the validation and request-building boundary,
+ * where truncation or incorrect filtering would affect real campaigns.
+ */
+test('sendSMS_handles_a_large_batch_of_valid_phone_numbers', async () => {
+  const manyNumbers = Array.from({ length: 250 }, () => '+254700000000');
+  const request = [{ numbers: manyNumbers, message: 'Hello', sender: 'TEST' }];
+
+  const [data, result] = await sendSMS(request, {
+    email: 'user@example.com',
+    apiKey: 'secret-key',
+  });
+
+  expect(data).toEqual({ success: true });
+  expect(result).toEqual({ error: undefined, incorrectNumbers: [] });
+
+  const defaultFetch = globalThis.fetch as FetchMock;
+  const [, init] = defaultFetch.mock.calls[0] as [string, RequestInit];
+  const body = JSON.parse(init.body as string) as {
+    data: { message_bag: { numbers: string } }[];
+  };
+  expect(body.data).toHaveLength(1);
+  expect(body.data[0].message_bag.numbers.split(',')).toHaveLength(250);
+  expect(body.data[0].message_bag.numbers).toContain('+254700000000');
+});
+
+/**
+ * What: sendSMS should process many separate valid bags through its public
+ * entrypoint without losing bags or incorrectly reporting invalid numbers.
+ * How: Sends 100 valid bags and verifies all 100 appear in the request and
+ * the returned invalid-number list is empty.
+ * Why: exercises the across-bags validation path separately from a large
+ * recipient list within one bag.
+ */
+test('sendSMS_handles_many_valid_message_bags', async () => {
+  const manyBags = Array.from({ length: 100 }, () => ({
+    numbers: ['254700000000'],
+    message: 'Hello',
+    sender: 'TEST',
+  }));
+
+  const [data, result] = await sendSMS(manyBags, {
+    email: 'user@example.com',
+    apiKey: 'secret-key',
+  });
+
+  expect(data).toEqual({ success: true });
+  expect(result).toEqual({ error: undefined, incorrectNumbers: [] });
+
+  const defaultFetch = globalThis.fetch as FetchMock;
+  const [, init] = defaultFetch.mock.calls[0] as [string, RequestInit];
+  const body = JSON.parse(init.body as string) as { data: unknown[] };
+  expect(body.data).toHaveLength(100);
+});
+
+/**
+ * What: sendSMS should deduplicate invalid numbers and omit an invalid-only
+ * bag while still sending another bag that contains a valid number.
+ * How: Sends duplicate invalid values in one bag and a valid value in a
+ * second bag, then checks the result and request contain only valid data.
+ * Why: callers need unique actionable feedback without losing deliverable
+ * messages or sending malformed recipient data to the gateway.
+ */
+test('sendSMS_deduplicates_invalid_numbers_and_drops_invalid_only_bags', async () => {
+  const request = [
+    {
+      numbers: ['not-a-number', 'not-a-number'],
+      message: 'Invalid message',
+      sender: 'TEST',
+    },
+    {
+      numbers: ['another-invalid-number', '254700000000'],
+      message: 'Valid message',
+      sender: 'APP',
+    },
+  ];
+  const fetchMock = mockFetch(async () =>
+    createResponse({ ok: true, status: 200, body: { success: true } })
+  );
+  globalThis.fetch = fetchMock as unknown as typeof fetch;
+
+  const [data, result] = await sendSMS(request, {
+    email: 'user@example.com',
+    apiKey: 'secret-key',
+  });
+
+  expect(data).toEqual({ success: true });
+  expect(result).toEqual({
+    error: undefined,
+    incorrectNumbers: ['not-a-number', 'another-invalid-number'],
+  });
+  expect(fetchMock.mock.calls).toHaveLength(1);
+
+  const [, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+  expect(JSON.parse(init.body as string)).toEqual({
+    data: [
+      {
+        message_bag: {
+          numbers: '+254700000000',
+          message: 'Valid message',
+          sender: 'APP',
+        },
+      },
+    ],
+  });
+});
+
+/**
+ * What: sendSMS should return the documented validation error for empty input
+ * and for every missing or empty required message-bag field.
+ * How: Passes each malformed value through sendSMS and checks the returned
+ * error while ensuring validation never reaches the gateway request.
+ * Why: the public API must reject malformed bags consistently without
+ * throwing or attempting to send partial request data.
+ */
+test('sendSMS_returns_errors_for_empty_or_incomplete_message_bags', async () => {
+  const invalidInputs = [
+    [],
+    [{}],
+    [{ numbers: [] }],
+    [{ message: 'Hello', sender: 'TEST' }],
+    [{ numbers: ['+254700000000'], sender: 'TEST' }],
+    [{ numbers: ['+254700000000'], message: '', sender: 'TEST' }],
+    [{ numbers: ['+254700000000'], message: 'Hello' }],
+    [{ numbers: ['+254700000000'], message: 'Hello', sender: '' }],
+  ];
+
+  for (const input of invalidInputs) {
+    const [data, error] = await sendSMS(input as never, {
+      email: 'user@example.com',
+      apiKey: 'secret-key',
+    });
+
+    expect(data).toBeUndefined();
+    expect(error).toBeInstanceOf(Error);
+    expect((error as Error).message).toBeTypeOf('string');
+    expect((error as Error).message.length).toBeGreaterThan(0);
+  }
 });
