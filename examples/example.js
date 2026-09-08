@@ -5,7 +5,7 @@
 
 import { sendSMS } from 'ujumbesms';
 
-const ujumbe = await sendSMS([
+const [data, err] = await sendSMS([
   {
     message: 'Hello, this is a test message from UjumbeSMS!',
     to: '+1234567890',
@@ -13,4 +13,4 @@ const ujumbe = await sendSMS([
   },
 ]);
 
-console.log(ujumbe);
+console.log(data, err);
